@@ -95,6 +95,7 @@ async def capture_visual_context(query: str):
         page = await browser.new_page()
         for step in plan['steps']:
             # await page.wait_for_load_state('networkidle')
+            print(step)
             if step['type'] == "NAVIGATE":
                 await page.goto(step['context']['url'])
             elif step['type'] == "INTERACT":

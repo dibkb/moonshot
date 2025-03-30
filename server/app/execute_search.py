@@ -3,22 +3,14 @@ from playwright.async_api import Page
 from .actions.search import SearchAction
 
 async def execute_search(page: Page, search_action: SearchAction, context: Dict[str, str]):
-    print(search_action)
     input_element = search_action['search_query_element']
     submit_element = search_action['submit_element']
     
-    # Use proper CSS selector syntax
-    if input_element['id']:
-        input_element = await page.query_selector(f"{input_element['tag']}[id='{input_element['id']}']")
-    elif input_element['name']:
-        input_element = await page.query_selector(f"{input_element['tag']}[name='{input_element['name']}']")
-    
-    # Fix the submit element selection logic
-    if submit_element['id'] and submit_element['id'] != 'None':
-        submit_element = await page.query_selector(f"{submit_element['tag']}[id='{submit_element['id']}']")
-    elif submit_element['name'] and submit_element['name'] != 'None':
-        submit_element = await page.query_selector(f"{submit_element['tag']}[name='{submit_element['name']}']")
-    print(input_element, submit_element)
+
+    if input_element['tag']:
+        input_element = await page.query_selector(make_selector(input_element))
+    if submit_element['tag']:
+        submit_element = await page.query_selector(make_selector(submit_element))
     if input_element:
         await input_element.fill(context['query'])
         # Add a small wait to ensure the input is processed
@@ -28,3 +20,13 @@ async def execute_search(page: Page, search_action: SearchAction, context: Dict[
         await submit_element.click()
         # Wait for navigation after click
         # await page.wait_for_load_state('networkidle')
+
+
+def make_selector(element: Dict[str, str]):
+    str_input_element = ""
+    for k,v in element.items():
+        if v != None and k != 'tag' and k != 'text':  # Skip tag and text attributes
+            str_input_element += f"][{k}='{v}'"
+    # Remove the first ][ and add closing bracket
+    selector = f"{element['tag']}[{str_input_element[2:]}]"
+    return selector

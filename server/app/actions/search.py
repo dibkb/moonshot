@@ -3,9 +3,9 @@ from langchain_core.prompts import ChatPromptTemplate
 import os
 import dotenv
 from pydantic import BaseModel, Field
-from typing import Dict
+from typing import Dict,Any, Optional
 from langchain_core.output_parsers import JsonOutputParser
-
+from ..filter.filter_response import filter_input
 
 dotenv.load_dotenv()
 from ..extract import ElementMetadata
@@ -17,34 +17,60 @@ planner_llm_groq = ChatGroq(
 )
 
 class SearchElement(BaseModel):
-    id: str = Field(description="Id of the element")
-    name: str = Field(description="Name of the element")
-    type: str = Field(description="Type of element (input, button, etc.)")
-    tag: str = Field(description="Tag of the element (input, button, etc.)")
+    id: Optional[str] = Field(default=None, description="Id of the element")
+    name: Optional[str] = Field(default=None, description="Name of the element")
+    type: Optional[str] = Field(default=None, description="Type of element (input, button, etc.)")
+    tag: Optional[str] = Field(default=None, description="Tag of the element (input, button, etc.)")
+    title: Optional[str] = Field(default=None, description="Title of the element")
+    text: Optional[str] = Field(default=None, description="Text of the element")
+
 class SearchAction(BaseModel):
     search_query_element: SearchElement = Field(description="Element to input search query")
     submit_element: SearchElement = Field(description="Element to submit the search")
 
-def extract_search_elements(page_html: list[ElementMetadata])->SearchAction:
+def extract_search_elements(page_html: list[Dict[str,Any]]):
     prompt = ChatPromptTemplate.from_template(
         """
         You are a web automation agent. You are given the page html to select which element to fill the search query and which element to click to submit the search query.
         Page HTML: {page_html}
 
-        input_elements_format : [{{"tag": "input", "title": None, "type": "text", "value": "", "text": "", "placeholder": "Search Amazon.in", "aria_label": "Search Amazon.in"}}.....]
-
-        Return JSON format:
+        You must return a valid JSON object with the following structure:
         {{
-            "search_query_element": {{"id": "search_query_element_id", "name": "search_query_element_name", "type": "input", "tag": "input"}},
-            "submit_element": {{"id": "submit_element_id", "name": "submit_element_name", "type": "button", "tag": "button"}}
+            "search_query_element": {{
+                "id": null,
+                "name": null,
+                "type": null,
+                "tag": null,
+                "title": null,
+                "text": null
+            }},
+            "submit_element": {{
+                "id": null,
+                "name": null,
+                "type": null,
+                "tag": null,
+                "title": null,
+                "text": null
+            }}
         }}
         
-        Popluate the search_query_element and submit_element with the correct id, name, type and tag. from the given page_html.
-
+        Instructions:
+        - All fields (id, name, type, tag) must be included in both elements
+        - Use null for any missing values
+        - Do not include any comments or additional text in the JSON
+        - The response must be a valid JSON object
         """
     )
-    # Add JsonOutputParser with the Pydantic model
     chain = prompt | planner_llm_groq | JsonOutputParser(pydantic_object=SearchAction)
     input = [m.model_dump() for m in page_html]
-    print(input)
-    return chain.invoke({"page_html": input})
+    filtered_input = filter_input(input)
+    try:
+        response = chain.invoke({"page_html": filtered_input})
+        return response
+    except Exception as e:
+        print(f"Error parsing response: {e}")
+        # Return default structure with all null values
+        return SearchAction(
+            search_query_element=SearchElement(),
+            submit_element=SearchElement()
+        )
