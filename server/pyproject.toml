@@ -13,7 +13,9 @@ dependencies = [
     "pytest-playwright (>=0.7.0,<0.8.0)",
     "langchain (>=0.3.21,<0.4.0)",
     "langchain-openai (>=0.3.11,<0.4.0)",
-    "langchain-groq (>=0.3.1,<0.4.0)"
+    "langchain-groq (>=0.3.1,<0.4.0)",
+    "playwright-stealth (>=1.0.6,<2.0.0)",
+    "setuptools (>=78.1.0,<79.0.0)"
 ]
 
 

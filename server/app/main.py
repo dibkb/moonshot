@@ -12,7 +12,7 @@ from .actions.search import extract_search_elements
 from .generate import generate_plan
 from .extract import extract_elements
 from .image_to_text import text_to_image
-
+from playwright_stealth import stealth_async
 app = FastAPI(
     title="FastAPI Demo",
     description="A FastAPI application with Docker and Poetry",
@@ -93,6 +93,7 @@ async def capture_visual_context(query: str):
         # }
         plan = generate_plan(query)
         page = await browser.new_page()
+        await stealth_async(page)
         for step in plan['steps']:
             # await page.wait_for_load_state('networkidle')
             print(step)
