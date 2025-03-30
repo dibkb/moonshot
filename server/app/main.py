@@ -7,11 +7,11 @@ import os
 from playwright.async_api import async_playwright, Playwright
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.encoders import jsonable_encoder
-from .run import run
-from .page import get_page_text
+from .execute_search import execute_search
+from .actions.search import extract_search_elements
+from .generate import generate_plan
+from .extract import extract_elements
 from .image_to_text import text_to_image
-import base64
-import asyncio
 
 app = FastAPI(
     title="FastAPI Demo",
@@ -73,84 +73,45 @@ async def health_check():
 #         return {"error": str(e)}
     
 @app.get("/visual-elements")
-async def capture_visual_context():
+async def capture_visual_context(query: str):
     global browser
     if not browser:
-        return {"error": "Browser not available."}
-    
-    async def generate_stream():
-        while True:  # Continuous stream
-            try:
-                page = await browser.new_page()
-                current_url = page.url
-
-                async def handle_url_change(frame):
-                    nonlocal current_url
-                    new_url = page.url
-                    screenshot_bytes = await page.screenshot()
-                    page_text = await text_to_image(screenshot_bytes)
-                    if new_url != current_url:
-                        update = {
-                            "from": current_url,
-                            "to": new_url,
-                            "timestamp": time.time(),
-                            "page_text": page_text
-                        }
-                        yield f"data: {jsonable_encoder(update)}\n\n"
-                        current_url = new_url
-
-                # Set up URL change listener
-                page.on("framenavigated", handle_url_change)
-
-                await page.goto("https://www.google.com")
-                elements = await page.query_selector_all('input,button,textarea')
-                
-                element_metadata = []
-                for element in elements:
-                    box = await element.bounding_box()
-                    if box:
-                        metadata = {
-                            "selector": await element.get_attribute("id") or await element.get_attribute("name"),
-                            "type": await element.get_attribute("type"),
-                            "value": await element.get_attribute("value"),
-                            'title': await element.get_attribute('title'),
-                            "tag": await element.evaluate('element => element.tagName.toLowerCase()'),
-                            "position": {
-                                "x": box["x"],
-                                "y": box["y"],
-                                "width": box["width"],
-                                "height": box["height"]
-                            },
-                            "text": await element.inner_text()
-                        }
-                        element_metadata.append(metadata)
-
-                yield f"data: {jsonable_encoder({'elements': element_metadata})}\n\n"
-                # Rest of the interaction logic
-                textarea = await page.query_selector('textarea')
-                if textarea:
-                    await textarea.fill("hello world")
-                
-                submit_button = await page.query_selector('input[type="submit"][value="Google Search"]')
-                if submit_button:
-                    async with page.expect_navigation():
-                        await submit_button.click()
-
-                await page.wait_for_load_state('networkidle')
-                # Keep connection alive with heartbeat
-                while True:
-                    await asyncio.sleep(30)  # Heartbeat every 30 seconds
-                    yield "data: heartbeat\n\n"
-
-            except Exception as e:
-                yield f"data: {{'error': '{str(e)}'}}\n\n"
-                await asyncio.sleep(5)  # Wait before retry
-                continue
-            finally:
-                await page.close()
-
-    return StreamingResponse(
-        generate_stream(),
-        media_type="text/event-stream"
-    )
+        return JSONResponse(content={"error": "Browser not available."})
+        
+    try:
+        # page = await browser.new_page()
+        # links = ['https://www.amazon.in/','https://www.google.com/','https://www.youtube.com/']
+        # await page.goto(links[2])
+            
+        # # Capture elements
+        
+        # response_data = {
+        #     "url": page.url,
+        #     "timestamp": time.time(),
+        #     "content": content,
+        #     "elements": element_metadata
+        # }
+        plan = generate_plan(query)
+        page = await browser.new_page()
+        for step in plan['steps']:
+            # await page.wait_for_load_state('networkidle')
+            if step['type'] == "NAVIGATE":
+                await page.goto(step['context']['url'])
+            elif step['type'] == "INTERACT":
+                element_metadata = await extract_elements(page)
+                # Capture screenshot and page text
+                screenshot_bytes = await page.screenshot()
+                # validate not captcha page
+                content = await text_to_image(screenshot_bytes)
+                objective = step['objective']
+                context = step['context']
+                search_action = extract_search_elements(element_metadata)
+                await execute_search(page,search_action,context)
+            elif step['type'] == "EXTRACT":
+                pass
+        # await page.close()
+        return JSONResponse(content=plan)
+        
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
     

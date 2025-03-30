@@ -6,11 +6,14 @@ authors = [
     {name = "dibkb",email = "dibas9110@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "fastapi[standard] (>=0.115.12,<0.116.0)",
     "pytesseract (>=0.3.13,<0.4.0)",
-    "pytest-playwright (>=0.7.0,<0.8.0)"
+    "pytest-playwright (>=0.7.0,<0.8.0)",
+    "langchain (>=0.3.21,<0.4.0)",
+    "langchain-openai (>=0.3.11,<0.4.0)",
+    "langchain-groq (>=0.3.1,<0.4.0)"
 ]
 
 
