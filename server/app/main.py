@@ -2,12 +2,12 @@ import random
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
-import pytesseract
 import time
-import os
 from playwright.async_api import async_playwright, Playwright
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.encoders import jsonable_encoder
+from .page import get_page_text
+from .get_text import get_clean_text
 from .execute_cick import execute_click
 from .actions.click import extract_click_elements
 from .execute_search import execute_search
@@ -131,14 +131,15 @@ async def capture_visual_context(query: str):
                 # screenshot_bytes = await page.screenshot()
                 # validate not captcha page
                 # content = await text_to_image(screenshot_bytes)
+
                 objective = step['objective']
                 params = step['params']
                 action_type = params['action_type']
                 description = params['description']
-
-                # print("\n")
-                # print("element_metadata",element_metadata)
-                # print("\n")
+                content = await get_clean_text(page)
+                print("\n")
+                print("content",content)
+                print("\n")
 
                 # fill-click
                 if action_type == "click":
@@ -149,12 +150,16 @@ async def capture_visual_context(query: str):
                     fill_action = extract_fill_elements(element_metadata,description,objective)
                     await execute_fill(page,fill_action,params)
                 if action_type == "fill-click":
-                    print("fill-click")
                     fill_click_action = extract_fill_click(element_metadata,description,objective)
-                    print(fill_click_action)
-                    print('\n')
                     await execute_search(page,fill_click_action,params)
             elif step['type'] == "EXTRACT":
+                screenshot_bytes = await page.screenshot()
+                # validate not captcha page
+                await page.wait_for_load_state('networkidle')
+                content = await text_to_image(screenshot_bytes)
+                print("\n")
+                print("content_extract",content)
+                print("\n")
                 pass
         # await page.close()
         return JSONResponse(content=plan)
