@@ -1,0 +1,9 @@
+Go to youtube.com, perform "Iphone" on the search field
+
+Go to amazon.in and search for 'iphone' in the search field
+
+Go to google.com, perform "Iphone" on the search field
+
+Go to google.com, click on the sign in button, fill the email and submit, fill the password and fill, search for "foobar" in the search
+
+Go to github.com| click on the signin button | then enter username, password and click submit | search for crustdata on the search field

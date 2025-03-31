@@ -33,6 +33,7 @@ planner_llm_groq = ChatGroq(
 planner_prompt = ChatPromptTemplate.from_template(
     """
     Break this command into high-level objectives for web automation:
+    In the command, withing | the actions need to performed on the same page.
     Command: {command}
 
     Consider:
@@ -40,10 +41,25 @@ planner_prompt = ChatPromptTemplate.from_template(
     2. Then perform interactions
     3. Finally extract data
 
+    This should be the format of the objective always:
+    
+    Always give full url in the navigate objective
+
+    "objective": "Perform search",
+    "type": "INTERACT",
+    "params": {{
+        "action_type": "fill-click",
+        "description": "Enter search query in main search box",
+        "params": {{
+          "value": "Iphone"
+        }}
+    }}
+
     action_type:
         click
         fill-click
         scroll-click
+        fill
     
     Return JSON format:
     {{
@@ -51,14 +67,17 @@ planner_prompt = ChatPromptTemplate.from_template(
             {{
                 "objective": "Navigate to domain",
                 "type": "NAVIGATE",
-                "params": {{"url": http://"..."}}
+                "params": {{"url": "http://..."}}
             }},
             {{
                 "objective": "Perform search",
                 "type": "INTERACT",
                 "params": {{
                     "action_type": "fill-click",
-                    "description": "Enter search query in main search box"
+                    "description": "Enter search query in main search box",
+                    "params": {{
+                        "value": "Iphone"
+                    }}
                 }}
             }},
             {{
