@@ -4,9 +4,9 @@ from typing import Dict, List, Optional
 
 class ElementMetadata(BaseModel):
     id: Optional[str] = None
-    name: Optional[str] = None
+    # name: Optional[str] = None
     tag: Optional[str] = None
-    title: Optional[str] = None
+    # title: Optional[str] = None
     type: Optional[str] = None
     value: Optional[str] = None
     inner_text: Optional[str] = None
@@ -19,7 +19,11 @@ class ElementMetadata(BaseModel):
         return {k: v for k, v in base_dict.items() if v is not None}
 
 async def extract_elements(page: Page):
-    elements = await page.query_selector_all('input,button,textarea,a')
+    # Wait for network to be idle and DOM to be loaded
+    await page.wait_for_load_state('networkidle')
+    await page.wait_for_load_state('domcontentloaded')
+
+    elements = await page.query_selector_all('input,button,textarea,a,form,label')
     element_metadata: List[ElementMetadata] = []
     
     for element in elements:
@@ -32,16 +36,16 @@ async def extract_elements(page: Page):
                 metadata["id"] = str(id)
             if (class_name := await element.get_attribute("class")):
                 metadata["class_name"] = str(class_name)
-            if (name := await element.get_attribute("name")):
-                metadata["name"] = str(name)
+            # if (name := await element.get_attribute("name")):
+            #     metadata["name"] = str(name)
             if (tag := await element.evaluate('element => element.tagName.toLowerCase()')):
                 metadata["tag"] = str(tag)
             if (type := await element.get_attribute("type")):
                 metadata["type"] = str(type)
             if (value := await element.get_attribute("value")):
                 metadata["value"] = str(value)
-            if (title := await element.get_attribute('title')):
-                metadata["title"] = str(title)
+            # if (title := await element.get_attribute('title')):
+            #     metadata["title"] = str(title)
             if (text := await element.inner_text()):
                 metadata["inner_text"] = str(text)
             

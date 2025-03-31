@@ -1,5 +1,6 @@
 from typing import Dict
 from playwright.async_api import Page
+from .utils.html_electors import make_selector
 from .actions.search import SearchAction
 
 async def execute_search(page: Page, search_action: SearchAction, context: Dict[str, str]):
@@ -22,11 +23,3 @@ async def execute_search(page: Page, search_action: SearchAction, context: Dict[
         # await page.wait_for_load_state('networkidle')
 
 
-def make_selector(element: Dict[str, str]):
-    attributes = []
-    for k, v in element.items():
-        if v is not None and k != 'tag' and k != 'text':  # Skip tag and text attributes
-            attributes.append(f"[{k}='{v}']")
-    
-    selector = f"{element['tag']}{''.join(attributes)}"
-    return selector

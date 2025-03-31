@@ -15,7 +15,7 @@ def filter_input(input: List[Dict[Any,Any]]):
 def remove_anchor_tags(input: List[Dict[Any,Any]]):
     filtered_input = []
     for x in input:
-        if x['tag'] != 'a':
+        if x['tag'] != 'a' and x['tag'] != 'button':
             filtered_input.append(x)
     return filtered_input
 

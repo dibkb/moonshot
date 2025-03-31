@@ -16,6 +16,7 @@ from .actions.fill import extract_fill_elements
 from .generate import generate_plan
 from .extract import extract_elements
 from .image_to_text import text_to_image
+from .execute_fill import execute_fill
 from playwright_stealth import stealth_async
 app = FastAPI(
     title="FastAPI Demo",
@@ -126,22 +127,31 @@ async def capture_visual_context(query: str):
             elif step['type'] == "INTERACT":
                 element_metadata = await extract_elements(page)
                 # Capture screenshot and page text
-                screenshot_bytes = await page.screenshot()
+                # screenshot_bytes = await page.screenshot()
                 # validate not captcha page
-                content = await text_to_image(screenshot_bytes)
+                # content = await text_to_image(screenshot_bytes)
                 objective = step['objective']
                 params = step['params']
                 action_type = params['action_type']
                 description = params['description']
+
+                # print("\n")
+                # print("element_metadata",element_metadata)
+                # print("\n")
+
                 # fill-click
                 if action_type == "click":
                     click_action = extract_click_elements(element_metadata,description)
+                    print("\n")
+                    print("click_action",click_action)
+                    print("\n")
                     await execute_click(page,click_action)
                 if action_type == "fill":
                     fill_action = extract_fill_elements(element_metadata,description,objective)
-                    print("\n")
-                    print("fill_action",fill_action)
-                    print("\n")
+                    # print("\n")
+                    # print("fill_action",fill_action)
+                    # print("\n")
+                    await execute_fill(page,fill_action,params)
                 if action_type == "fill-click":
                     fill_click_action = extract_fill_click_elements(element_metadata,description)
                     await execute_search(page,fill_click_action,params)

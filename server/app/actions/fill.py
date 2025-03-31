@@ -36,21 +36,16 @@ def extract_fill_elements(page_html: list[Dict[str,Any]],description: str,object
 
         The objective of the action is: {objective}
 
-        You must return a valid JSON object with the following structure:
+        You must return a valid JSON object with all the original attributes of the element:
         
         "fill_element": {{
-            "inner_text": null,
-            "id": null,
-            "name": null,
-            "type": null,
-            "tag": null,
-            "title": null,
-            "text": null
+            id: str
+            name: str 
+            ....
         }}
         
         
         Instructions:
-        - Use null for any missing values
         - Do not include any comments or additional text in the JSON
         - The response must be a valid JSON object
         """

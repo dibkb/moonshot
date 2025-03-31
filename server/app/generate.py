@@ -23,7 +23,7 @@ planner_llm_gpt4o = ChatOpenAI(
     model_kwargs={"response_format": {"type": "json_object"}}
 )
 planner_llm_groq = ChatGroq(
-    model="llama3-8b-8192",
+    model="llama-3.3-70b-versatile",
     temperature=0.1,
     api_key=os.getenv("GROQ_API_KEY"),
     model_kwargs={"response_format": {"type": "json_object"}}
@@ -32,7 +32,7 @@ planner_llm_groq = ChatGroq(
 # Create prompt template
 planner_prompt = ChatPromptTemplate.from_template(
     """
-    Break this command into high-level objectives for web automation:
+    You will analyze the command and return a JSON response with high-level objectives for web automation.
     In the command, withing | the actions need to performed on the same page.
     Command: {command}
 
@@ -45,46 +45,60 @@ planner_prompt = ChatPromptTemplate.from_template(
     
     Always give full url in the navigate objective
 
-    "objective": "Perform search",
-    "type": "INTERACT",
-    "params": {{
-        "action_type": "fill-click",
-        "description": "Enter search query in main search box",
+    For login/form filling actions:
+    - Each field should be a separate action
+    - For fill actions, always use this format in the JSON:
+        "type": "INTERACT",
         "params": {{
-          "value": "Iphone"
+            "action_type": "fill",
+            "description": "Enter [field name]",
+            "params": {{
+                "value": "[actual value]"
+            }}
         }}
-    }}
 
-    action_type:
+    action_type options for JSON response:
         click
+        fill
         fill-click
         scroll-click
-        fill
     
-    Return JSON format:
+    Return a JSON object in exactly this format:
     {{
         "steps": [
             {{
-                "objective": "Navigate to domain",
+                "objective": "Navigate to login page",
                 "type": "NAVIGATE",
-                "params": {{"url": "http://..."}}
+                "params": {{"url": "https://www.example.com"}}
             }},
             {{
-                "objective": "Perform search",
+                "objective": "Enter email",
                 "type": "INTERACT",
                 "params": {{
-                    "action_type": "fill-click",
-                    "description": "Enter search query in main search box",
+                    "action_type": "fill",
+                    "description": "Enter email in email field",
                     "params": {{
-                        "value": "Iphone"
+                        "value": "user@example.com"
                     }}
                 }}
             }},
             {{
-                "objective": "Get results",
-                "type": "EXTRACT",
+                "objective": "Enter password",
+                "type": "INTERACT",
                 "params": {{
-                    "description": "Extract first search result information"
+                    "action_type": "fill",
+                    "description": "Enter password in password field",
+                    "params": {{
+                        "value": "password123"
+                    }}
+                }}
+            }},
+            {{
+                "objective": "Submit login",
+                "type": "INTERACT",
+                "params": {{
+                    "action_type": "click",
+                    "description": "Click login button"
                 }}
             }}
         ]

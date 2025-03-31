@@ -45,7 +45,7 @@ def extract_fill_click_elements(page_html: list[Dict[str,Any]],description: str)
                 "tag": null,
                 "title": null,
                 "inner_text": null,
-                "class_name": null
+                "class": null
             }},
             "submit_element": {{
                 "id": null,
@@ -54,7 +54,7 @@ def extract_fill_click_elements(page_html: list[Dict[str,Any]],description: str)
                 "tag": null,
                 "title": null,
                 "inner_text": null,
-                "class_name": null
+                "class": null
             }}
         }}
         
