@@ -148,9 +148,9 @@ async def capture_visual_context(query: str):
                     await execute_click(page,click_action)
                 if action_type == "fill":
                     fill_action = extract_fill_elements(element_metadata,description,objective)
-                    # print("\n")
-                    # print("fill_action",fill_action)
-                    # print("\n")
+                    print("\n")
+                    print("fill_action",fill_action)
+                    print("\n")
                     await execute_fill(page,fill_action,params)
                 if action_type == "fill-click":
                     fill_click_action = extract_fill_click_elements(element_metadata,description)

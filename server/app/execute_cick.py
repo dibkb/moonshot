@@ -8,5 +8,8 @@ async def execute_click(page: Page, click_action: SearchAction):
         await page.get_by_text(text).first.click()
     else:
         if click_action['click_element']['tag']:
+            print("\n")
+            print("make_selector",make_selector(click_action['click_element']))
+            print("\n")
             click_element = await page.query_selector(make_selector(click_action['click_element']))
             await click_element.click()
