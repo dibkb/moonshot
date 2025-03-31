@@ -11,7 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from .execute_cick import execute_click
 from .actions.click import extract_click_elements
 from .execute_search import execute_search
-from .actions.search import extract_fill_click_elements
+from .actions.search import extract_fill_click
 from .actions.fill import extract_fill_elements
 from .generate import generate_plan
 from .extract import extract_elements
@@ -153,7 +153,7 @@ async def capture_visual_context(query: str):
                     print("\n")
                     await execute_fill(page,fill_action,params)
                 if action_type == "fill-click":
-                    fill_click_action = extract_fill_click_elements(element_metadata,description)
+                    fill_click_action = extract_fill_click(element_metadata,description,objective)
                     await execute_search(page,fill_click_action,params)
             elif step['type'] == "EXTRACT":
                 pass

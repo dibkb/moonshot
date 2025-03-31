@@ -47,6 +47,7 @@ planner_prompt = ChatPromptTemplate.from_template(
 
     For login/form filling actions:
     - Each field should be a separate action
+    - Login/auth flows should always use "fill" for input fields and "click" for buttons
     - For fill actions, always use this format in the JSON:
         "type": "INTERACT",
         "params": {{
@@ -58,11 +59,15 @@ planner_prompt = ChatPromptTemplate.from_template(
         }}
 
     action_type options for JSON response:
-        click
-        fill
-        fill-click
-        scroll-click
+        click - For buttons and clickable elements
+        fill - For input fields in forms (especially login/auth flows)
+        fill-click - For search operations where you need to fill input and press Enter
+        scroll-click - For elements that need scrolling before clicking
     
+    Use "fill-click" specifically for search operations where you need to:
+    - Fill a search box with a query
+    - Press Enter to submit the search
+
     Return a JSON object in exactly this format:
     {{
         "steps": [

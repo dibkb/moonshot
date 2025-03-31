@@ -48,6 +48,7 @@ def extract_fill_elements(page_html: list[Dict[str,Any]],description: str,object
         Instructions:
         - Do not include any comments or additional text in the JSON
         - The response must be a valid JSON object
+        - The response must be a valid element from the page html
         """
     )
     chain = prompt | planner_llm_groq | JsonOutputParser(pydantic_object=SearchAction)

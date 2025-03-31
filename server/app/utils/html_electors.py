@@ -1,5 +1,5 @@
 from typing import Dict
-allowed_attributes = ['class_name', 'id', 'name', 'type', 'value', 'inner_text', 'placeholder', 'aria_label']
+allowed_attributes = ['id', 'name', 'type', 'value', 'inner_text', 'placeholder', 'aria_label']
 def make_selector(element: Dict[str, str]):
     attributes = []
     for k, v in element.items():
