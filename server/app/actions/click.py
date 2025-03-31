@@ -16,7 +16,15 @@ planner_llm_groq = ChatGroq(
 )
 
 class SearchElement(BaseModel):
-    inner_text: str
+    id: Optional[str] = None
+    tag: Optional[str] = None
+    type: Optional[str] = None
+    value: Optional[str] = None
+    inner_text: Optional[str] = None
+    placeholder: Optional[str] = None
+    aria_label: Optional[str] = None
+    class_name: Optional[str] = None
+
 
 class SearchAction(BaseModel):
     click_element: SearchElement = Field(description="Element to click")
@@ -32,19 +40,19 @@ def extract_click_elements(page_html: list[Dict[str,Any]],description: str):
         You must return a valid JSON object with the following structure:
         
         "click_element": {{
-            "inner_text": str
+            "inner_text": str,...
         }}
-        
         
         Instructions:
             Based on the description, select the element to click to fulfill the action.
-            - based on the inner_text of the html element, select the element to click.
+            - Find the matching element based on the inner_text
+            - Return the element with all its original key-value pairs intact
+            - Do not add any new fields that weren't in the original element
         """
     )
     chain = prompt | planner_llm_groq | JsonOutputParser(pydantic_object=SearchAction)
     input = [m.model_dump() for m in page_html]
-    filtered_input = remove_input_tags(filter_input(input))
-    filtered_input = get_only_inner_text(filtered_input)
+    filtered_input = filter_input(input)
     try:
         response = chain.invoke({"page_html": filtered_input[0: min(len(filtered_input),50)],"description":description})
         return response
