@@ -1,19 +1,13 @@
-from langchain_groq import ChatGroq
+
 from langchain_core.prompts import ChatPromptTemplate
-import os
 import dotenv
 from pydantic import BaseModel, Field
 from typing import Dict,Any, Optional
 from langchain_core.output_parsers import JsonOutputParser
 from ..filter.filter_response import filter_input,remove_input_tags,get_only_inner_text
-
+from ..llms.main import LLM
 dotenv.load_dotenv()
-planner_llm_groq = ChatGroq(
-    model="llama3-8b-8192",
-    temperature=0.1,
-    api_key=os.getenv("GROQ_API_KEY"),
-    model_kwargs={"response_format": {"type": "json_object"}}
-)
+llm = LLM()
 
 class SearchElement(BaseModel):
     id: Optional[str] = None
@@ -50,7 +44,7 @@ def extract_click_elements(page_html: list[Dict[str,Any]],description: str):
             - Do not add any new fields that weren't in the original element
         """
     )
-    chain = prompt | planner_llm_groq | JsonOutputParser(pydantic_object=SearchAction)
+    chain = prompt | llm.get_groq_llm() | JsonOutputParser(pydantic_object=SearchAction)
     input = [m.model_dump() for m in page_html]
     filtered_input = filter_input(input)
     try:

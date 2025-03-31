@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict
 import os
 import dotenv
+from .llms.main import LLM
 dotenv.load_dotenv()
 # Define data models
 class Step(BaseModel):
@@ -15,19 +16,7 @@ class Step(BaseModel):
 class AutomationPlan(BaseModel):
     steps: List[Step] = Field(description="List of automation steps")
 
-# Set up planner LLM
-planner_llm_gpt4o = ChatOpenAI(
-    model="gpt-4o",
-    temperature=0.1,
-    api_key=os.getenv("OPENAI_API_KEY"),
-    model_kwargs={"response_format": {"type": "json_object"}}
-)
-planner_llm_groq = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    temperature=0.1,
-    api_key=os.getenv("GROQ_API_KEY"),
-    model_kwargs={"response_format": {"type": "json_object"}}
-)
+llm = LLM()
 
 # Create prompt template
 planner_prompt = ChatPromptTemplate.from_template(
@@ -115,7 +104,7 @@ planner_prompt = ChatPromptTemplate.from_template(
 # Create the processing chain
 planner_chain = (
     planner_prompt 
-    | planner_llm_groq
+    | llm.get_groq_llm()
     | JsonOutputParser(pydantic_object=AutomationPlan)
 )
 
