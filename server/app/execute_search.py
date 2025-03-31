@@ -8,11 +8,10 @@ async def execute_search(page: Page, search_action: SearchAction, context: Dict[
     params = context['params']
 
     if input_element['tag']:
-        print("\n")
-        print("make_selector",make_selector(input_element))
-        print("\n")
+        print("input_element",make_selector(input_element))
         input_element = await page.query_selector(make_selector(input_element))
     if input_element:
+        print("input_element",input_element)
         await input_element.fill(params['value'])
         await input_element.press('Enter')
 

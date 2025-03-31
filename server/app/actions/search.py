@@ -55,6 +55,8 @@ def extract_fill_click(page_html: list[Dict[str,Any]],description: str,objective
     input = [m.model_dump() for m in page_html]
     filtered_input = filter_input(input)
     filtered_input = remove_anchor_tags(filtered_input)
+    print("filtered_input",filtered_input)
+    print('\n')
 
     try:
         response = chain.invoke({"page_html": filtered_input,"description":description, "objective":objective})

@@ -7,9 +7,6 @@ async def execute_fill(page: Page, fill_action: SearchAction, context: Dict[str,
     params = context['params']
 
     if input_element['tag']:
-        print("\n")
-        print("make_selector",make_selector(input_element))
-        print("\n")
         input_element = await page.query_selector(make_selector(input_element))
     if input_element:
         await input_element.fill(params['value'])

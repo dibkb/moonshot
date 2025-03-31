@@ -37,7 +37,7 @@ async def startup():
     global browser, playwright_instance
     playwright_instance = await async_playwright().start()
     # Launch the browser in headed mode (headless=False)
-    browser = await playwright_instance.chromium.launch(channel="chrome",headless=False)
+    browser = await playwright_instance.chromium.launch(channel="msedge",headless=False)
     # Optionally, create a default page or context here if needed.
     print("Browser started and will remain open until server shutdown.")
 
@@ -120,8 +120,9 @@ async def capture_visual_context(query: str):
         plan = generate_plan(query)
         # Interact with login form
         for step in plan['steps']:
+            print(step)
+            print('\n')
             # await page.wait_for_load_state('networkidle')
-            print("current step",step)
             if step['type'] == "NAVIGATE":
                 await page.goto(step['params']['url'])
             elif step['type'] == "INTERACT":
@@ -142,18 +143,16 @@ async def capture_visual_context(query: str):
                 # fill-click
                 if action_type == "click":
                     click_action = extract_click_elements(element_metadata,description)
-                    print("\n")
-                    print("click_action",click_action)
-                    print("\n")
+    
                     await execute_click(page,click_action)
                 if action_type == "fill":
                     fill_action = extract_fill_elements(element_metadata,description,objective)
-                    print("\n")
-                    print("fill_action",fill_action)
-                    print("\n")
                     await execute_fill(page,fill_action,params)
                 if action_type == "fill-click":
+                    print("fill-click")
                     fill_click_action = extract_fill_click(element_metadata,description,objective)
+                    print(fill_click_action)
+                    print('\n')
                     await execute_search(page,fill_click_action,params)
             elif step['type'] == "EXTRACT":
                 pass
