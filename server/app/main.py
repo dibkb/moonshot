@@ -94,24 +94,24 @@ async def capture_visual_context(query: str):
         plan = generate_plan(query)
         page = await browser.new_page()
         await stealth_async(page)
-        for step in plan['steps']:
-            # await page.wait_for_load_state('networkidle')
-            print(step)
-            if step['type'] == "NAVIGATE":
-                await page.goto(step['context']['url'])
-            elif step['type'] == "INTERACT":
-                element_metadata = await extract_elements(page)
-                # Capture screenshot and page text
-                screenshot_bytes = await page.screenshot()
-                # validate not captcha page
-                content = await text_to_image(screenshot_bytes)
-                objective = step['objective']
-                context = step['context']
-                search_action = extract_search_elements(element_metadata)
-                await execute_search(page,search_action,context)
-            elif step['type'] == "EXTRACT":
-                pass
-        # await page.close()
+        # for step in plan['steps']:
+        #     # await page.wait_for_load_state('networkidle')
+        #     print(step)
+        #     if step['type'] == "NAVIGATE":
+        #         await page.goto(step['context']['url'])
+        #     elif step['type'] == "INTERACT":
+        #         element_metadata = await extract_elements(page)
+        #         # Capture screenshot and page text
+        #         screenshot_bytes = await page.screenshot()
+        #         # validate not captcha page
+        #         content = await text_to_image(screenshot_bytes)
+        #         objective = step['objective']
+        #         context = step['context']
+        #         search_action = extract_search_elements(element_metadata)
+        #         await execute_search(page,search_action,context)
+        #     elif step['type'] == "EXTRACT":
+        #         pass
+        # # await page.close()
         return JSONResponse(content=plan)
         
     except Exception as e:

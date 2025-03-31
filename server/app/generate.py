@@ -9,7 +9,7 @@ import dotenv
 dotenv.load_dotenv()
 # Define data models
 class Step(BaseModel):
-    type: str = Field(description="Action type: NAVIGATE, LOGIN, SEARCH, CLICK, etc.")
+    type: str = Field(description="Action type: NAVIGATE, INTERACT, EXTRACT, etc.")
     params: Dict[str, str] = Field(description="Parameters needed for the action")
 
 class AutomationPlan(BaseModel):
@@ -34,11 +34,16 @@ planner_prompt = ChatPromptTemplate.from_template(
     """
     Break this command into high-level objectives for web automation:
     Command: {command}
-    
+
     Consider:
     1. First navigate to the main domain
     2. Then perform interactions
     3. Finally extract data
+
+    action_type:
+        click
+        fill-click
+        scroll-click
     
     Return JSON format:
     {{
@@ -46,17 +51,22 @@ planner_prompt = ChatPromptTemplate.from_template(
             {{
                 "objective": "Navigate to domain",
                 "type": "NAVIGATE",
-                "context": {{"url": https://"..."}}
+                "params": {{"url": http://"..."}}
             }},
             {{
                 "objective": "Perform search",
                 "type": "INTERACT",
-                "context": {{"action_type": "search", "query": "..."}}
+                "params": {{
+                    "action_type": "fill-click",
+                    "description": "Enter search query in main search box"
+                }}
             }},
             {{
                 "objective": "Get results",
                 "type": "EXTRACT",
-                "context": {{"target": "first_result"}}
+                "params": {{
+                    "description": "Extract first search result information"
+                }}
             }}
         ]
     }}
