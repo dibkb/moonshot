@@ -6,7 +6,7 @@ class ElementMetadata(BaseModel):
     id: Optional[str] = None
     # name: Optional[str] = None
     tag: Optional[str] = None
-    # title: Optional[str] = None
+    href: Optional[str] = None
     type: Optional[str] = None
     value: Optional[str] = None
     inner_text: Optional[str] = None
@@ -20,12 +20,12 @@ class ElementMetadata(BaseModel):
 
 async def extract_elements(page: Page):
     # Wait for network to be idle and DOM to be loaded
-    # await page.wait_for_load_state('networkidle',timeout=10000)
-    # await page.wait_for_load_state('domcontentloaded',timeout=10000)
+    await page.wait_for_load_state('networkidle',timeout=10000)
+    await page.wait_for_load_state('domcontentloaded',timeout=10000)
 
     elements = await page.query_selector_all('input,button,textarea,a,form,label')
     element_metadata: List[ElementMetadata] = []
-    
+
     for element in elements:
         box = await element.bounding_box()
         if box:
@@ -36,8 +36,8 @@ async def extract_elements(page: Page):
                 metadata["id"] = str(id)
             if (class_name := await element.get_attribute("class")):
                 metadata["class_name"] = str(class_name)
-            # if (name := await element.get_attribute("name")):
-            #     metadata["name"] = str(name)
+            if (href := await element.get_attribute("href")):
+                metadata["href"] = str(href)
             if (tag := await element.evaluate('element => element.tagName.toLowerCase()')):
                 metadata["tag"] = str(tag)
             if (type := await element.get_attribute("type")):

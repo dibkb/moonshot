@@ -6,6 +6,7 @@ import time
 from playwright.async_api import async_playwright, Playwright
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.encoders import jsonable_encoder
+from .actions.extract import extract_information
 from .page import get_page_text
 from .get_text import get_clean_text
 from .execute_cick import execute_click
@@ -133,8 +134,8 @@ async def run_browser_automation(task_id: str, query: str):
         plan = generate_plan(query)
         # Interact with login form
         for step in plan['steps']:
-            update = f"Update : Processing step '{step}'..."
-            await send_update(queue,update)
+            update = f"Processing step '{step}'"
+            await send_update(queue,update,key = 'llm')
             # await page.wait_for_load_state('networkidle')
             if step['type'] == "NAVIGATE":
                 await page.goto(step['params']['url'])
@@ -149,15 +150,10 @@ async def run_browser_automation(task_id: str, query: str):
                 params = step['params']
                 action_type = params['action_type']
                 description = params['description']
-                content = await get_clean_text(page)
-                print("\n")
-                print("content",content)
-                print("\n")
 
                 # fill-click
                 if action_type == "click":
                     click_action = extract_click_elements(element_metadata,description)
-    
                     await execute_click(page,click_action)
                 if action_type == "fill":
                     fill_action = extract_fill_elements(element_metadata,description,objective)
@@ -167,16 +163,17 @@ async def run_browser_automation(task_id: str, query: str):
                     await execute_search(page,fill_click_action,params)
             elif step['type'] == "EXTRACT":
                 # validate not captcha page
-                await page.wait_for_load_state('networkidle')
-                screenshot_bytes = await page.screenshot()
-                content = await text_to_image(screenshot_bytes)
+                await page.wait_for_load_state('networkidle',timeout=10000)
+                await page.wait_for_load_state('domcontentloaded',timeout=10000)
                 text = await page.inner_text("body")
-                print("\n")
-                print("text",text)
-                print("\n")
-                pass
+
+                result = extract_information(text,description,objective)
+                if 'information' in result:
+                    await send_update(queue,result['information'],key = 'information')
         # await page.close()
-        await queue.put("Task Completed")
+        await send_update(queue,"Task Completed",key = 'llm')
+        task_queues.pop(task_id, None)
+        
     except Exception as e:
         print(e)
 

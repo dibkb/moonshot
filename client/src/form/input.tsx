@@ -1,16 +1,18 @@
 import { cn } from "@/lib/utils";
 import { Dispatch, SetStateAction } from "react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Loader2 } from "lucide-react";
 const FormInput = ({
   handleSubmit,
   className,
   query,
   setQuery,
+  streaming,
 }: {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   className?: string;
   query: string;
   setQuery: Dispatch<SetStateAction<string>>;
+  streaming: boolean;
 }) => {
   return (
     <form
@@ -46,10 +48,17 @@ const FormInput = ({
             className={cn(
               "w-9 h-9 rounded-full flex items-center justify-center",
               "transition-colors cursor-pointer",
-              "bg-neutral-600 hover:bg-neutral-700"
+              "bg-neutral-600",
+              !streaming && "hover:bg-neutral-700",
+              streaming && "disabled:opacity-50 cursor-not-allowed"
             )}
+            disabled={streaming}
           >
-            <ArrowUp className="text-white" />
+            {streaming ? (
+              <Loader2 className="text-white animate-spin" />
+            ) : (
+              <ArrowUp className="text-white" />
+            )}
           </button>
         </div>
       </main>

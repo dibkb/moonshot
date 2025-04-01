@@ -3,8 +3,23 @@ import { cn } from "./lib/utils";
 import FormInput from "./form/input";
 import { useState } from "react";
 import OutputPage from "./output/output-page";
+import axiosInstance from "./axios";
 function App() {
   const [query, setQuery] = useState("");
+  const [streaming, setStreaming] = useState(false);
+  const [taskId, setTaskId] = useState<string | null>("x");
+  const submitQueryHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setStreaming(true);
+    const response = await axiosInstance.post("/tasks", {
+      query,
+    });
+    const data = response.data;
+    if (data.task_id) {
+      setStreaming(false);
+      setTaskId(data.task_id);
+    }
+  };
   const renderPage = (homepage: boolean = false) => {
     return (
       <div
@@ -19,10 +34,11 @@ function App() {
             How can I help you today?
           </h3>
           <FormInput
-            handleSubmit={() => {}}
+            handleSubmit={submitQueryHandler}
             query={query}
             setQuery={setQuery}
             className="mt-9 w-full"
+            streaming={streaming}
           />
         </div>
       </div>
@@ -31,7 +47,7 @@ function App() {
   return (
     <main className="h-screen container mx-auto grid grid-cols-2 gap-3">
       {renderPage()}
-      <OutputPage />
+      {taskId && <OutputPage taskId={taskId} />}
     </main>
   );
 }
