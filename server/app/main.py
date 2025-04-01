@@ -17,7 +17,7 @@ from .generate import generate_plan
 from .extract import extract_elements
 from .image_to_text import text_to_image
 from .execute_fill import execute_fill
-
+from .task.update import send_update
 from playwright_stealth import stealth_async
 import uuid
 import asyncio
@@ -134,7 +134,7 @@ async def run_browser_automation(task_id: str, query: str):
         # Interact with login form
         for step in plan['steps']:
             update = f"Update : Processing step '{step}'..."
-            await queue.put(update)
+            await send_update(queue,update)
             # await page.wait_for_load_state('networkidle')
             if step['type'] == "NAVIGATE":
                 await page.goto(step['params']['url'])
