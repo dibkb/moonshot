@@ -1,5 +1,5 @@
 import random
-from fastapi import FastAPI
+from fastapi import FastAPI,WebSocket, WebSocketDisconnect, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import time
@@ -17,7 +17,13 @@ from .generate import generate_plan
 from .extract import extract_elements
 from .image_to_text import text_to_image
 from .execute_fill import execute_fill
+
 from playwright_stealth import stealth_async
+import uuid
+import asyncio
+from pydantic import BaseModel
+
+
 app = FastAPI(
     title="FastAPI Demo",
     description="A FastAPI application with Docker and Poetry",
@@ -51,6 +57,7 @@ async def shutdown():
         await playwright_instance.stop()
     print("Browser and Playwright have been closed.")
 
+
 @app.get("/")
 async def root():
     return {"Moonshot Server is running 🚀"}
@@ -60,28 +67,34 @@ async def health_check():
     return f"Healthy {time.time()}"
 
 
-# @app.get('/text-to-image')
-# async def text_to_image():
-#     try:
-#         screenshot_path = './app/ss/1.png'
-#         print(os.getcwd())
-#         if not os.path.exists(screenshot_path):
-#             return {"error": "Screenshot file not found"}
-            
-#         image = Image.open(screenshot_path)
-#         extracted_text = pytesseract.image_to_string(image)
-#         extracted_lines = extracted_text.split('\n')
-#         extracted_lines = [line.strip() for line in extracted_lines if line.strip()]
 
-#         return {"lines": extracted_lines}
-#     except Exception as e:
-#         return {"error": str(e)}
-    
-@app.get("/visual-elements")
-async def capture_visual_context(query: str):
+# Global dictionary mapping task IDs to their asyncio.Queue
+task_queues = {}
+
+class TaskRequest(BaseModel):
+    query: str
+
+@app.post("/tasks")
+async def create_task(task: TaskRequest, background_tasks: BackgroundTasks):
+    # Generate a unique task ID
+    task_id = str(uuid.uuid4())
+    # Create an asyncio queue for this task and store it in the global dictionary
+    task_queue = asyncio.Queue()
+    task_queues[task_id] = task_queue
+    # Launch the background automation task
+    background_tasks.add_task(run_browser_automation, task_id, task.query)
+    # Return the task ID to the client
+    return {"task_id": task_id}
+
+async def run_browser_automation(task_id: str, query: str):
+
     global browser
     if not browser:
-        return JSONResponse(content={"error": "Browser not available."})
+        return;
+    
+    queue = task_queues.get(task_id)
+    if not queue:
+        return
         
     try:
         # Define random viewport dimensions and common headers
@@ -120,8 +133,8 @@ async def capture_visual_context(query: str):
         plan = generate_plan(query)
         # Interact with login form
         for step in plan['steps']:
-            print(step)
-            print('\n')
+            update = f"Update : Processing step '{step}'..."
+            await queue.put(update)
             # await page.wait_for_load_state('networkidle')
             if step['type'] == "NAVIGATE":
                 await page.goto(step['params']['url'])
@@ -153,19 +166,49 @@ async def capture_visual_context(query: str):
                     fill_click_action = extract_fill_click(element_metadata,description,objective)
                     await execute_search(page,fill_click_action,params)
             elif step['type'] == "EXTRACT":
-                screenshot_bytes = await page.screenshot()
                 # validate not captcha page
                 await page.wait_for_load_state('networkidle')
+                screenshot_bytes = await page.screenshot()
                 content = await text_to_image(screenshot_bytes)
+                text = await page.inner_text("body")
                 print("\n")
-                print("content_extract",content)
+                print("text",text)
                 print("\n")
                 pass
         # await page.close()
-        return JSONResponse(content=plan)
-        
+        await queue.put("Task Completed")
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        print(e)
+
+@app.websocket("/ws/{task_id}")
+async def websocket_endpoint(websocket: WebSocket, task_id: str):
+    """
+    WebSocket endpoint to subscribe to task updates.
+    It listens to the corresponding asyncio.Queue and forwards messages to the client.
+    """
+    await websocket.accept()
+    queue = task_queues.get(task_id)
+    if not queue:
+        await websocket.send_text("Invalid task ID")
+        await websocket.close()
+        return
+
+    try:
+        while True:
+            message = await queue.get()
+            await websocket.send_text(message)
+
+            if message == "Task Completed":
+                break
+    except WebSocketDisconnect:
+        pass
+    finally:
+
+        task_queues.pop(task_id, None)
+
+    
+
+
     
 
 
