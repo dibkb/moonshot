@@ -18,6 +18,8 @@ class AutomationPlan(BaseModel):
 
 llm = LLM()
 
+
+
 # Create prompt template
 planner_prompt = ChatPromptTemplate.from_template(
     """
@@ -29,6 +31,7 @@ planner_prompt = ChatPromptTemplate.from_template(
     1. First navigate to the main domain
     2. Then perform interactions
     3. Finally extract data
+
 
     This should be the format of the objective always:
     

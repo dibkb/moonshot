@@ -177,9 +177,15 @@ async def run_browser_automation(task_id: str, query: str):
         # await page.close()
         await send_update(queue,"Task Completed",key = 'llm')
         task_queues.pop(task_id, None)
+        await context.close()  # Close the browser context
         
     except Exception as e:
         print(e)
+        # Clean up resources in case of error
+        await send_update(queue, f"Error: {str(e)}", key = 'llm')
+        task_queues.pop(task_id, None)
+        if 'context' in locals():
+            await context.close()
 
 @app.websocket("/ws/{task_id}")
 async def websocket_endpoint(websocket: WebSocket, task_id: str):
