@@ -202,16 +202,31 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
 
     try:
         while True:
-            message = await queue.get()
-            await websocket.send_text(message)
+            # Add a timeout to the queue.get() operation
+            try:
+                message = await asyncio.wait_for(queue.get(), timeout=30.0)  # 30 second timeout
+                await websocket.send_text(message)
 
-            if message == "Task Completed":
+                if message == "Task Completed":
+                    break
+            except asyncio.TimeoutError:
+                # If no message received for 30 seconds, close the connection
+                await websocket.send_text("Connection timed out")
                 break
     except WebSocketDisconnect:
-        pass
+        # Handle WebSocket disconnect gracefully
+        print(f"WebSocket disconnected for task {task_id}")
     finally:
-
-        task_queues.pop(task_id, None)
+        # Ensure cleanup happens
+        if task_id in task_queues:
+            # Clear any remaining items in the queue
+            while not queue.empty():
+                try:
+                    queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+            task_queues.pop(task_id, None)
+        await websocket.close()
 
     
 
