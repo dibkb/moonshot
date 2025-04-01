@@ -20,8 +20,17 @@ class ElementMetadata(BaseModel):
 
 async def extract_elements(page: Page):
     # Wait for network to be idle and DOM to be loaded
-    await page.wait_for_load_state('networkidle',timeout=10000)
-    await page.wait_for_load_state('domcontentloaded',timeout=10000)
+    # try:
+    #     await page.wait_for_load_state('networkidle', timeout=10000)
+    # except:
+    #     # Continue if networkidle timeout occurs
+    #     pass
+        
+    try:
+        await page.wait_for_load_state('domcontentloaded', timeout=5000)
+    except:
+        # Continue if domcontentloaded timeout occurs
+        pass
 
     elements = await page.query_selector_all('input,button,textarea,a,form,label')
     element_metadata: List[ElementMetadata] = []

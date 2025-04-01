@@ -3,7 +3,7 @@ from .actions.click import SearchAction
 from typing import Dict
 from .utils.html_electors import make_selector
 async def execute_click(page: Page, click_action: SearchAction):
-    if 'href' in click_action['click_element']:
+    if 'href' in click_action['click_element'] and click_action['click_element']['href'] != "" and click_action['click_element']['href'] != "#":
         await page.goto(click_action['click_element']['href'])
         return
     if 'inner_text' in click_action['click_element']:

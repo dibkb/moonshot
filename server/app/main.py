@@ -44,7 +44,7 @@ async def startup():
     global browser, playwright_instance
     playwright_instance = await async_playwright().start()
     # Launch the browser in headed mode (headless=False)
-    browser = await playwright_instance.chromium.launch(channel="msedge",headless=False)
+    browser = await playwright_instance.chromium.launch(channel="chrome",headless=False)
     # Optionally, create a default page or context here if needed.
     print("Browser started and will remain open until server shutdown.")
 
@@ -154,6 +154,7 @@ async def run_browser_automation(task_id: str, query: str):
                 # fill-click
                 if action_type == "click":
                     click_action = extract_click_elements(element_metadata,description)
+                    print("click_action",click_action)
                     await execute_click(page,click_action)
                 if action_type == "fill":
                     fill_action = extract_fill_elements(element_metadata,description,objective)
@@ -163,8 +164,11 @@ async def run_browser_automation(task_id: str, query: str):
                     await execute_search(page,fill_click_action,params)
             elif step['type'] == "EXTRACT":
                 # validate not captcha page
-                await page.wait_for_load_state('networkidle',timeout=10000)
-                await page.wait_for_load_state('domcontentloaded',timeout=10000)
+                # await page.wait_for_load_state('networkidle',timeout=10000)
+                try:
+                    await page.wait_for_load_state('domcontentloaded',timeout=5000)
+                except:
+                    pass
                 text = await page.inner_text("body")
 
                 result = extract_information(text,description,objective)

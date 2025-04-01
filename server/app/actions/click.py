@@ -1,4 +1,3 @@
-
 from langchain_core.prompts import ChatPromptTemplate
 import dotenv
 from pydantic import BaseModel, Field
@@ -58,7 +57,7 @@ class SearchAction(BaseModel):
 #             click_element=SearchElement()
 #         )
     
-def extract_click_elements(page_html: list[Dict[str,Any]],description: str):
+def extract_click_elements(page_html: list[Dict[str,Any]], description: str):
     prompt = ChatPromptTemplate.from_template(
         """
         You are a web automation agent. You are given the page html to select which element to click.
@@ -73,15 +72,20 @@ def extract_click_elements(page_html: list[Dict[str,Any]],description: str):
         }}
         
         Instructions:
-            Based on the description, select the element to click to fulfill the action.
-            - Find the matching element based on the inner_text
-            - Return the element with all its original key-value pairs intact
+            Based on the description, select the most appropriate element to click:
+            - For exact matches (e.g. "click login", "click signup"), find elements with exact text matches
+            - For ambiguous descriptions (e.g. "click top result", "click first item"):
+                - Consider element position, relevance, and visibility
+                - Choose the most prominent or first matching element
+            - Return the selected element with ALL its original key-value pairs intact
             - Do not add any new fields that weren't in the original element
+            - Do not modify any existing values
         """
     )
     chain = prompt | llm.get_groq_llm() | JsonOutputParser(pydantic_object=SearchAction)
     input = [m.model_dump() for m in page_html]
     filtered_input = filter_input(input)
+    print("filtered_input",filtered_input)
     try:
         response = chain.invoke({"page_html": filtered_input[0: min(len(filtered_input),50)],"description":description})
         return response
