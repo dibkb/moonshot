@@ -19,13 +19,15 @@ This project consists of a Vite-based frontend client and a FastAPI backend serv
 cd client
 ```
 
-2. Install dependencies:
+2. Make the .env file (same as shown in the .env.example)
+
+3. Install dependencies:
 
 ```bash
 pnpm install
 ```
 
-3. Start the development server:
+4. Start the development server:
 
 ```bash
 pnpm run dev
@@ -41,19 +43,21 @@ The frontend development server should now be running and accessible at `http://
 cd server
 ```
 
-2. Install Python dependencies using Poetry:
+2. Make the .env file (same as shown in the .env.example)
+
+3. Install Python dependencies using Poetry:
 
 ```bash
 poetry install
 ```
 
-3. Install Playwright:
+4. Install Playwright:
 
 ```bash
 poetry run playwright install
 ```
 
-4. Start the FastAPI server:
+5. Start the FastAPI server:
 
 ```bash
 poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8090
@@ -68,5 +72,3 @@ The backend server will be running at `http://localhost:8090`
 - API documentation is available at `http://localhost:8090/docs`
 
 ## License
-
-[Add your license information here]
